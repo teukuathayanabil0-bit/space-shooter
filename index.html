@@ -2,67 +2,52 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Space Shooter</title>
-
+<title>Game Tembak-Tembakan</title>
 <style>
-body {
-    background: black;
-    margin: 0;
-    overflow: hidden;
-}
-
-#gameCanvas {
-    display: block;
-    margin: auto;
-    background: #000;
-    border: 2px solid white;
-}
-
-#controls {
-    position: fixed;
-    bottom: 20px;
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-    pointer-events: none;
-}
-
-#joystick {
-    width: 120px;
-    height: 120px;
-    background: rgba(255,255,255,0.1);
-    border: 3px solid white;
-    border-radius: 50%;
-    margin-left: 20px;
-    pointer-events: auto;
-    touch-action: none;
-}
-
-#shootBtn {
-    width: 110px;
-    height: 110px;
-    border-radius: 50%;
-    margin-right: 20px;
-    font-size: 20px;
-    background: rgba(255, 200, 0, 0.85);
-    border: 3px solid white;
-    pointer-events: auto;
-    touch-action: none;
-}
+    body {
+        background: #000;
+        margin: 0;
+        overflow: hidden;
+        font-family: Arial;
+    }
+    canvas {
+        background: #111;
+        display: block;
+        margin: auto;
+    }
+    .controls {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 20px;
+    }
+    .btn {
+        width: 60px;
+        height: 60px;
+        font-size: 24px;
+        color: white;
+        background: #444;
+        border: 2px solid #888;
+        border-radius: 10px;
+        user-select: none;
+        text-align: center;
+        line-height: 60px;
+    }
 </style>
-
 </head>
 <body>
 
 <canvas id="gameCanvas" width="400" height="600"></canvas>
 
-<!-- Touch Buttons -->
-<div id="controls">
-    <div id="joystick"></div>
-    <button id="shootBtn">Tembak</button>
+<div class="controls">
+    <div class="btn" id="leftBtn">◀</div>
+    <div class="btn" id="shootBtn">🔥</div>
+    <div class="btn" id="rightBtn">▶</div>
 </div>
 
 <script src="game.js"></script>
+
 </body>
 </html>
