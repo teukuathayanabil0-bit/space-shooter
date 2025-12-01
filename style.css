@@ -1,0 +1,12 @@
+body {
+    background: black;
+    margin: 0;
+    overflow: hidden;
+}
+
+#game {
+    display: block;
+    margin: auto;
+    background: #111;
+    border: 2px solid white;
+}
