@@ -1,151 +1,97 @@
-// Canvas setup
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
-// Player (Spaceship)
-const player = {
+// Player
+let player = {
     x: canvas.width / 2 - 20,
-    y: canvas.height - 60,
+    y: canvas.height - 50,
     width: 40,
-    height: 50,
+    height: 20,
     speed: 5
 };
 
-// Bullets
+// Peluru & Musuh
 let bullets = [];
-function shoot() {
-    bullets.push({
-        x: player.x + player.width / 2 - 3,
-        y: player.y,
-        width: 6,
-        height: 12
-    });
-}
-
-// Enemies
 let enemies = [];
-let score = 0;
+let enemySpawnTime = 0;
 
-// Spawn enemy every 1.5 sec
-setInterval(() => {
-    enemies.push({
-        x: Math.random() * (canvas.width - 40),
-        y: -40,
-        width: 40,
-        height: 40,
-        speed: 2
-    });
-}, 1500);
+// Kontrol
+let leftPressed = false;
+let rightPressed = false;
+let shootPressed = false;
 
-// Keyboard controls
-let keys = {};
-document.addEventListener("keydown", e => keys[e.code] = true);
-document.addEventListener("keyup", e => keys[e.code] = false);
+document.getElementById("leftBtn").ontouchstart = () => leftPressed = true;
+document.getElementById("leftBtn").ontouchend = () => leftPressed = false;
+document.getElementById("rightBtn").ontouchstart = () => rightPressed = true;
+document.getElementById("rightBtn").ontouchend = () => rightPressed = false;
+document.getElementById("shootBtn").ontouchstart = () => shootPressed = true;
+document.getElementById("shootBtn").ontouchend = () => shootPressed = false;
 
-// Update Player Movement
-function updatePlayer() {
-    if (keys["ArrowLeft"] && player.x > 0) player.x -= player.speed;
-    if (keys["ArrowRight"] && player.x < canvas.width - player.width) player.x += player.speed;
-    if (keys["Space"]) shoot();
+function drawPlayer() {
+    ctx.fillStyle = "cyan";
+    ctx.fillRect(player.x, player.y, player.width, player.height);
 }
 
-// Bullets update
-function updateBullets() {
+function drawBullets() {
+    ctx.fillStyle = "yellow";
     bullets.forEach((b, i) => {
-        b.y -= 6;
+        ctx.fillRect(b.x, b.y, 5, 10);
+        b.y -= 7;
         if (b.y < 0) bullets.splice(i, 1);
     });
 }
 
-// Enemy update & collision
-function updateEnemies() {
-    enemies.forEach((enemy, ei) => {
-        enemy.y += enemy.speed;
+function spawnEnemy() {
+    if (enemySpawnTime <= 0) {
+        enemies.push({
+            x: Math.random() * (canvas.width - 40),
+            y: -20,
+            width: 40,
+            height: 20,
+            speed: 2
+        });
+        enemySpawnTime = 50;
+    }
+    enemySpawnTime--;
+}
 
-        if (enemy.y > canvas.height) {
-            alert("Game Over! Score: " + score);
-            document.location.reload();
-        }
+function drawEnemies() {
+    ctx.fillStyle = "red";
+    enemies.forEach((e, i) => {
+        e.y += e.speed;
+        ctx.fillRect(e.x, e.y, e.width, e.height);
 
-        bullets.forEach((b, bi) => {
-            if (
-                b.x < enemy.x + enemy.width &&
-                b.x + b.width > enemy.x &&
-                b.y < enemy.y + enemy.height &&
-                b.y + b.height > enemy.y
-            ) {
-                enemies.splice(ei, 1);
-                bullets.splice(bi, 1);
-                score++;
+        // jika musuh keluar
+        if (e.y > canvas.height) enemies.splice(i, 1);
+
+        bullets.forEach((b, j) => {
+            if (b.x < e.x + e.width &&
+                b.x + 5 > e.x &&
+                b.y < e.y + e.height &&
+                b.y + 10 > e.y) {
+                enemies.splice(i, 1);
+                bullets.splice(j, 1);
             }
         });
     });
 }
 
-// Draw objects
-function draw() {
+function update() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Background stars
-    ctx.fillStyle = "white";
-    for (let i = 0; i < 50; i++) {
-        ctx.fillRect(Math.random() * canvas.width, Math.random() * canvas.height, 2, 2);
+    if (leftPressed && player.x > 0) player.x -= player.speed;
+    if (rightPressed && player.x < canvas.width - player.width) player.x += player.speed;
+    if (shootPressed) {
+        bullets.push({ x: player.x + 18, y: player.y });
+        shootPressed = false;
     }
 
-    // Player
-    ctx.fillStyle = "cyan";
-    ctx.fillRect(player.x, player.y, player.width, player.height);
+    drawPlayer();
+    drawBullets();
+    spawnEnemy();
+    drawEnemies();
 
-    // Bullets
-    ctx.fillStyle = "yellow";
-    bullets.forEach(b => ctx.fillRect(b.x, b.y, b.width, b.height));
-
-    // Enemies
-    ctx.fillStyle = "red";
-    enemies.forEach(e => ctx.fillRect(e.x, e.y, e.width, e.height));
-
-    // Score text
-    ctx.fillStyle = "white";
-    ctx.font = "22px Arial";
-    ctx.fillText("Score: " + score, 10, 25);
+    requestAnimationFrame(update);
 }
 
-// GAME LOOP
-function gameLoop() {
-    updatePlayer();
-    updateBullets();
-    updateEnemies();
-    draw();
-    requestAnimationFrame(gameLoop);
-}
-gameLoop();
-
-// =================================
-// TOUCH CONTROLS FOR MOBILE
-// =================================
-
-const joystick = document.getElementById("joystick");
-const shootBtn = document.getElementById("shootBtn");
-
-let joystickActive = false;
-let startX = 0;
-
-joystick.addEventListener("touchstart", (e) => {
-    joystickActive = true;
-    startX = e.touches[0].clientX;
-});
-
-joystick.addEventListener("touchmove", (e) => {
-    if (!joystickActive) return;
-    let moveX = e.touches[0].clientX;
-
-    if (moveX < startX - 20) player.x -= player.speed;
-    if (moveX > startX + 20) player.x += player.speed;
-
-    if (player.x < 0) player.x = 0;
-    if (player.x > canvas.width - player.width) player.x = canvas.width - player.width;
-});
-
-joystick.addEventListener("touchend", () => joystickActive = false);
-
-shootBtn.addEventListener("touchstart", () => shoot());
+update();
