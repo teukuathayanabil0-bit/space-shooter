@@ -2,52 +2,35 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Game Tembak-Tembakan</title>
-<style>
-    body {
-        background: #000;
-        margin: 0;
-        overflow: hidden;
-        font-family: Arial;
-    }
-    canvas {
-        background: #111;
-        display: block;
-        margin: auto;
-    }
-    .controls {
-        position: fixed;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        display: flex;
-        gap: 20px;
-    }
-    .btn {
-        width: 60px;
-        height: 60px;
-        font-size: 24px;
-        color: white;
-        background: #444;
-        border: 2px solid #888;
-        border-radius: 10px;
-        user-select: none;
-        text-align: center;
-        line-height: 60px;
-    }
-</style>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Space Shooter</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<canvas id="gameCanvas" width="400" height="600"></canvas>
-
-<div class="controls">
-    <div class="btn" id="leftBtn">◀</div>
-    <div class="btn" id="shootBtn">🔥</div>
-    <div class="btn" id="rightBtn">▶</div>
+<div id="menu">
+  <h1>🚀 SPACE SHOOTER</h1>
+  <button id="startBtn">START</button>
 </div>
 
-<script src="game.js"></script>
+<div id="hud">
+  <span id="score">Score: 0</span>
+  <span id="highscore">High: 0</span>
+  <span id="health">HP: 3</span>
+</div>
 
+<canvas id="gameCanvas"></canvas>
+
+<div id="gameOver">
+  <h2>GAME OVER</h2>
+  <p id="finalScore"></p>
+  <button onclick="location.reload()">RESTART</button>
+</div>
+
+<audio id="shootSound" src="shoot.mp3"></audio>
+<audio id="explosionSound" src="explosion.mp3"></audio>
+<audio id="bgm" src="bgm.mp3" loop></audio>
+
+<script src="game.js"></script>
 </body>
 </html>
