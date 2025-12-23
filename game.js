@@ -1,148 +1,143 @@
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 
-// Player
-let player = {
-    x: canvas.width / 2 - 20,
-    y: canvas.height - 50,
-    width: 40,
-    height: 20,
-    speed: 5
+let score = 0;
+let hp = 3;
+let gameRunning = false;
+
+const player = { x: canvas.width/2-25, y: canvas.height-80, w:50, h:50, speed:7 };
+const bullets = [];
+const enemies = [];
+
+let boss = null;
+let bossHP = 50;
+
+const keys = {};
+document.addEventListener("keydown", e => keys[e.key] = true);
+document.addEventListener("keyup", e => keys[e.key] = false);
+
+const shootSound = document.getElementById("shootSound");
+const explosionSound = document.getElementById("explosionSound");
+const bgm = document.getElementById("bgm");
+
+document.getElementById("startBtn").onclick = () => {
+  document.getElementById("menu").style.display = "none";
+  bgm.volume = 0.4;
+  bgm.play();
+  gameRunning = true;
+  loop();
 };
 
-let bullets = [];
-let enemies = [];
-let score = 0;
-let gameOver = false;
-
-// Suara
-const shootSound = new Audio("https://tinyurl.com/laser-sfx");
-const explosionSound = new Audio("https://tinyurl.com/explosion-sfx");
-
-// Spawn musuh alien
-setInterval(() => {
-    if (!gameOver) {
-        enemies.push({
-            x: Math.random() * (canvas.width - 50),
-            y: -40,
-            width: 40,
-            height: 40,
-            speed: 2
-        });
-    }
-}, 900);
-
-// Kontrol HP
-let leftPressed = false;
-let rightPressed = false;
-let shootPressed = false;
-
-document.getElementById("leftBtn").ontouchstart = () => leftPressed = true;
-document.getElementById("leftBtn").ontouchend = () => leftPressed = false;
-document.getElementById("rightBtn").ontouchstart = () => rightPressed = true;
-document.getElementById("rightBtn").ontouchend = () => rightPressed = false;
-document.getElementById("shootBtn").ontouchstart = () => shootPressed = true;
-document.getElementById("shootBtn").ontouchend = () => shootPressed = false;
-
-function resetGame() {
-    bullets = [];
-    enemies = [];
-    score = 0;
-    gameOver = false;
-    player.x = canvas.width / 2 - 20;
+function shoot() {
+  bullets.push({ x:player.x+22, y:player.y, w:6, h:15, speed:10 });
+  shootSound.currentTime = 0;
+  shootSound.play();
 }
 
-// Gambar Alien
-function drawAliens() {
-    enemies.forEach((e, i) => {
-        e.y += e.speed;
-
-        // Kepala
-        ctx.fillStyle = "lime";
-        ctx.beginPath();
-        ctx.arc(e.x + e.width/2, e.y + 15, 15, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Badan
-        ctx.fillRect(e.x + 5, e.y + 25, 30, 18);
-
-        // Mata
-        ctx.fillStyle = "black";
-        ctx.beginPath();
-        ctx.arc(e.x + 12, e.y + 12, 3, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(e.x + 28, e.y + 12, 3, 0, Math.PI * 2);
-        ctx.fill();
-
-        if (e.y > canvas.height) {
-            gameOver = true;
-        }
+setInterval(() => {
+  if (gameRunning && !boss)
+    enemies.push({
+      x: Math.random()*(canvas.width-40),
+      y: -40,
+      w: 40,
+      h: 40,
+      speed: 3 + Math.random()*2
     });
+}, 800);
+
+function update() {
+  if (keys["ArrowLeft"] && player.x > 0) player.x -= player.speed;
+  if (keys["ArrowRight"] && player.x+player.w < canvas.width) player.x += player.speed;
+  if (keys[" "] && bullets.length < 5) shoot();
+
+  bullets.forEach(b => b.y -= b.speed);
+  enemies.forEach(e => e.y += e.speed);
+
+  bullets.forEach((b,bi)=>{
+    enemies.forEach((e,ei)=>{
+      if (b.x<e.x+e.w && b.x+b.w>e.x && b.y<e.y+e.h && b.y+b.h>e.y){
+        bullets.splice(bi,1);
+        enemies.splice(ei,1);
+        explosionSound.play();
+        score+=10;
+      }
+    });
+  });
+
+  enemies.forEach((e,ei)=>{
+    if (e.y > canvas.height){
+      enemies.splice(ei,1);
+      hp--;
+    }
+  });
+
+  if (score >= 200 && !boss){
+    boss = { x:canvas.width/2-80, y:-150, w:160, h:80, speed:1 };
+  }
+
+  if (boss){
+    if (boss.y < 50) boss.y += boss.speed;
+    boss.x += Math.sin(Date.now()*0.002)*2;
+
+    bullets.forEach((b,bi)=>{
+      if (b.x<boss.x+boss.w && b.x+b.w>boss.x && b.y<boss.y+boss.h && b.y+b.h>boss.y){
+        bullets.splice(bi,1);
+        bossHP--;
+      }
+    });
+
+    if (bossHP <= 0){
+      boss = null;
+      bossHP = 50;
+      score += 200;
+    }
+  }
+
+  if (hp <= 0) endGame();
+
+  document.getElementById("score").innerText = "Score: "+score;
+  document.getElementById("health").innerText = "HP: "+hp;
+  document.getElementById("highscore").innerText =
+    "High: " + (localStorage.getItem("highscore") || 0);
 }
 
 function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.clearRect(0,0,canvas.width,canvas.height);
 
-    if (gameOver) {
-        ctx.fillStyle = "white";
-        ctx.font = "32px Arial";
-        ctx.fillText("GAME OVER!", canvas.width / 2 - 110, canvas.height / 2);
-        ctx.font = "20px Arial";
-        ctx.fillText("Tap TEMBAK untuk restart", canvas.width / 2 - 140, canvas.height / 2 + 40);
+  ctx.fillStyle="cyan";
+  ctx.fillRect(player.x,player.y,player.w,player.h);
 
-        if (shootPressed) resetGame();
-        return requestAnimationFrame(draw);
-    }
+  ctx.fillStyle="yellow";
+  bullets.forEach(b=>ctx.fillRect(b.x,b.y,b.w,b.h));
 
-    // Gerak player
-    if (leftPressed && player.x > 0) player.x -= player.speed;
-    if (rightPressed && player.x < canvas.width - player.width) player.x += player.speed;
+  ctx.fillStyle="red";
+  enemies.forEach(e=>ctx.fillRect(e.x,e.y,e.w,e.h));
 
-    if (shootPressed) {
-        bullets.push({ x: player.x + 18, y: player.y });
-        shootSound.currentTime = 0;
-        shootSound.play();
-        shootPressed = false;
-    }
+  if (boss){
+    ctx.fillStyle="purple";
+    ctx.fillRect(boss.x,boss.y,boss.w,boss.h);
 
-    // Gambar player
-    ctx.fillStyle = "cyan";
-    ctx.fillRect(player.x, player.y, player.width, player.height);
-
-    // Gambar peluru
-    ctx.fillStyle = "yellow";
-    bullets.forEach((b, bi) => {
-        b.y -= 7;
-        ctx.fillRect(b.x, b.y, 5, 10);
-        if (b.y < 0) bullets.splice(bi, 1);
-    });
-
-    // Gambar alien
-    drawAliens();
-
-    // Cek tabrakan
-    bullets.forEach((b, bi) => {
-        enemies.forEach((e, ei) => {
-            if (b.x < e.x + e.width && b.x + 5 > e.x && 
-                b.y < e.y + e.height && b.y + 10 > e.y) {
-
-                explosionSound.currentTime = 0;
-                explosionSound.play();
-
-                enemies.splice(ei, 1);
-                bullets.splice(bi, 1);
-                score++;
-            }
-        });
-    });
-
-    // Skor
-    ctx.fillStyle = "white";
-    ctx.font = "22px Arial";
-    ctx.fillText("Score: " + score, 10, 25);
-
-    requestAnimationFrame(draw);
+    ctx.fillStyle="white";
+    ctx.fillRect(boss.x,boss.y-10,boss.w,5);
+    ctx.fillStyle="lime";
+    ctx.fillRect(boss.x,boss.y-10,boss.w*(bossHP/50),5);
+  }
 }
 
-draw();
+function loop(){
+  if (!gameRunning) return;
+  update();
+  draw();
+  requestAnimationFrame(loop);
+}
+
+function endGame(){
+  gameRunning = false;
+  bgm.pause();
+  let high = localStorage.getItem("highscore") || 0;
+  if (score > high) localStorage.setItem("highscore", score);
+  document.getElementById("finalScore").innerText = "Score: "+score;
+  document.getElementById("gameOver").style.display="flex";
+}
