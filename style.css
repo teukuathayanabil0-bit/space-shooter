@@ -1,12 +1,54 @@
-body {
-    background: black;
-    margin: 0;
-    overflow: hidden;
+* {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
 }
 
-#game {
-    display: block;
-    margin: auto;
-    background: #111;
-    border: 2px solid white;
+body {
+  background: radial-gradient(circle at top, #020024, #000);
+  color: white;
+  overflow: hidden;
+}
+
+canvas {
+  display: block;
+  margin: auto;
+}
+
+#menu, #gameOver {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.9);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+#menu h1 {
+  font-size: 3rem;
+  margin-bottom: 20px;
+}
+
+button {
+  padding: 12px 30px;
+  font-size: 1.2rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  background: cyan;
+  color: black;
+}
+
+#hud {
+  position: fixed;
+  top: 10px;
+  width: 100%;
+  display: flex;
+  justify-content: space-around;
+  pointer-events: none;
+}
+
+#gameOver {
+  display: none;
 }
