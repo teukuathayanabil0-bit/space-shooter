@@ -1,12 +1,20 @@
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-/* ================= INPUT ================= */
+/* FULLSCREEN */
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener("resize", resize);
+
+/* INPUT */
 let keys = {};
 document.addEventListener("keydown", e => keys[e.key] = true);
 document.addEventListener("keyup", e => keys[e.key] = false);
 
-/* ===== MOBILE CONTROL ===== */
+/* MOBILE CONTROL */
 let joyX = 0, joyY = 0;
 let shooting = false;
 let dragging = false;
@@ -26,16 +34,16 @@ document.addEventListener("touchend", () => {
 
 document.addEventListener("touchmove", e => {
   if (!dragging) return;
-  const rect = joystick.getBoundingClientRect();
+  const r = joystick.getBoundingClientRect();
   const t = e.touches[0];
 
-  let x = t.clientX - rect.left - 60;
-  let y = t.clientY - rect.top - 60;
+  let x = t.clientX - r.left - 60;
+  let y = t.clientY - r.top - 60;
 
-  const dist = Math.hypot(x, y);
-  if (dist > 40) {
-    x = (x / dist) * 40;
-    y = (y / dist) * 40;
+  const d = Math.hypot(x, y);
+  if (d > 40) {
+    x = (x / d) * 40;
+    y = (y / d) * 40;
   }
 
   joyX = x / 40;
@@ -48,16 +56,15 @@ document.addEventListener("touchmove", e => {
 shootBtn.addEventListener("touchstart", () => shooting = true);
 shootBtn.addEventListener("touchend", () => shooting = false);
 
-/* ================= GAME OBJECT ================= */
+/* GAME DATA */
 const player = {
-  x: 400,
-  y: 500,
+  x: canvas.width / 2,
+  y: canvas.height - 100,
   vx: 0,
   vy: 0,
-  size: 20,
-  speed: 0.6,
-  maxSpeed: 6,
-  hp: 100,
+  size: 18,
+  speed: 0.7,
+  maxSpeed: 7,
   cooldown: 0
 };
 
@@ -66,48 +73,46 @@ let enemies = [];
 let boss = null;
 let score = 0;
 
-/* ================= FUNCTIONS ================= */
+/* FUNCTIONS */
 function shoot() {
   bullets.push({
     x: player.x,
     y: player.y,
-    vy: -10,
+    vy: -12,
     damage: 10
   });
 }
 
 function spawnEnemy() {
   enemies.push({
-    x: Math.random() * 760 + 20,
-    y: -20,
+    x: Math.random() * (canvas.width - 40) + 20,
+    y: -30,
     vx: Math.random() * 2 - 1,
-    vy: 2,
-    size: 18,
+    vy: 2 + Math.random() * 2,
+    size: 16,
     hp: 20
   });
 }
 
 function spawnBoss() {
   boss = {
-    x: 400,
+    x: canvas.width / 2,
     y: 120,
-    hp: 600
+    hp: 500
   };
 }
 
-/* ================= UPDATE ================= */
+/* UPDATE */
 function update() {
-  // Keyboard movement
+  /* MOVEMENT */
   if (keys["a"] || keys["ArrowLeft"]) player.vx -= player.speed;
   if (keys["d"] || keys["ArrowRight"]) player.vx += player.speed;
   if (keys["w"] || keys["ArrowUp"]) player.vy -= player.speed;
   if (keys["s"] || keys["ArrowDown"]) player.vy += player.speed;
 
-  // Mobile joystick
   player.vx += joyX * player.speed * 1.5;
   player.vy += joyY * player.speed * 1.5;
 
-  // Inertia
   player.vx *= 0.9;
   player.vy *= 0.9;
 
@@ -117,24 +122,24 @@ function update() {
   player.x += player.vx;
   player.y += player.vy;
 
-  // Shooting
+  /* SHOOT */
   if ((keys[" "] || shooting) && player.cooldown <= 0) {
     shoot();
-    player.cooldown = 15;
+    player.cooldown = 12;
   }
   player.cooldown--;
 
-  // Bullets
+  /* BULLETS */
   bullets.forEach(b => b.y += b.vy);
-  bullets = bullets.filter(b => b.y > -20);
+  bullets = bullets.filter(b => b.y > -50);
 
-  // Enemies
+  /* ENEMIES */
   enemies.forEach(e => {
     e.x += e.vx;
     e.y += e.vy;
   });
 
-  // Collision
+  /* COLLISION */
   bullets.forEach(b => {
     enemies.forEach(e => {
       if (Math.hypot(b.x - e.x, b.y - e.y) < e.size) {
@@ -154,27 +159,27 @@ function update() {
       score += 10;
       return false;
     }
-    return true;
+    return e.y < canvas.height + 50;
   });
 
   if (score >= 200 && !boss) spawnBoss();
 }
 
-/* ================= DRAW ================= */
+/* DRAW */
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // Player
+  /* PLAYER */
   ctx.fillStyle = "cyan";
   ctx.beginPath();
   ctx.arc(player.x, player.y, player.size, 0, Math.PI * 2);
   ctx.fill();
 
-  // Bullets
+  /* BULLETS */
   ctx.fillStyle = "yellow";
-  bullets.forEach(b => ctx.fillRect(b.x - 2, b.y, 4, 10));
+  bullets.forEach(b => ctx.fillRect(b.x - 2, b.y, 4, 12));
 
-  // Enemies
+  /* ENEMIES */
   ctx.fillStyle = "red";
   enemies.forEach(e => {
     ctx.beginPath();
@@ -182,7 +187,7 @@ function draw() {
     ctx.fill();
   });
 
-  // Boss
+  /* BOSS */
   if (boss) {
     ctx.fillStyle = "purple";
     ctx.beginPath();
@@ -190,20 +195,21 @@ function draw() {
     ctx.fill();
 
     ctx.fillStyle = "white";
-    ctx.fillRect(200, 20, boss.hp / 2, 10);
+    ctx.fillRect(canvas.width / 2 - 150, 20, boss.hp / 2, 10);
   }
 
-  // UI
+  /* UI */
   ctx.fillStyle = "white";
   ctx.fillText("Score: " + score, 10, 20);
+  ctx.fillText("Enemy: " + enemies.length, 10, 40);
 }
 
-/* ================= LOOP ================= */
+/* LOOP */
 function loop() {
   update();
   draw();
   requestAnimationFrame(loop);
 }
 
-setInterval(spawnEnemy, 1000);
+setInterval(spawnEnemy, 700);
 loop();
